@@ -1,7 +1,7 @@
-From b03065ee4589bb696267705b1b07d89b6b1599f2 Mon Sep 17 00:00:00 2001
-From: vstumpf <vincents.995@gmail.com>
-Date: Mon, 22 Aug 2016 01:42:19 -0700
-Subject: [PATCH] mmo status size
+From d080fe2f35ac309b7035b0392d4767b5b04a3e20 Mon Sep 17 00:00:00 2001
+From: nitrous <vincents.995@gmail.com>
+Date: Mon, 22 Aug 2016 08:18:53 +0000
+Subject: [PATCH] packet length for mmostatus increased
 
 ---
  src/char/char_mapif.c | 50 +++++++++++++++++++++++++-------------------------
@@ -10,7 +10,7 @@ Subject: [PATCH] mmo status size
  3 files changed, 55 insertions(+), 48 deletions(-)
 
 diff --git a/src/char/char_mapif.c b/src/char/char_mapif.c
-index 9d2669f..1225ff0 100644
+index bab7cb2..de2d47b 100644
 --- a/src/char/char_mapif.c
 +++ b/src/char/char_mapif.c
 @@ -393,10 +393,10 @@ int chmapif_parse_regmapuser(int fd, int id){
@@ -49,7 +49,7 @@ index 9d2669f..1225ff0 100644
  		{	//Flag, set character offline after saving. [Skotlex]
  			char_set_char_offline(cid, aid);
  			WFIFOHEAD(fd,10);
-@@ -1038,21 +1038,21 @@ int chmapif_parse_reqauth(int fd, int id){
+@@ -1050,21 +1050,21 @@ int chmapif_parse_reqauth(int fd, int id){
  				cd = (struct mmo_charstatus*)uidb_get(char_db_,char_id);
  		}
  		if( runflag == CHARSERVER_ST_RUNNING && autotrade && cd ){
@@ -81,7 +81,7 @@ index 9d2669f..1225ff0 100644
  
  			char_set_char_online(id, char_id, account_id);
  		} else if( runflag == CHARSERVER_ST_RUNNING &&
-@@ -1067,21 +1067,21 @@ int chmapif_parse_reqauth(int fd, int id){
+@@ -1079,21 +1079,21 @@ int chmapif_parse_reqauth(int fd, int id){
  #endif
  			)
  		{// auth ok
@@ -133,7 +133,7 @@ index 2e5d3f6..329202d 100644
  	}
  	else if( len == 0 )
 diff --git a/src/map/chrif.c b/src/map/chrif.c
-index ee73578..33874ce 100644
+index 2c0fc76..bc23af0 100644
 --- a/src/map/chrif.c
 +++ b/src/map/chrif.c
 @@ -32,7 +32,7 @@ static struct eri *auth_db_ers; //For reutilizing player login structures.
@@ -145,7 +145,7 @@ index ee73578..33874ce 100644
  	 6,-1,19, 7,-1,39,30, 10,	// 2b00-2b07: U->2b00, U->2b01, U->2b02, U->2b03, U->2b04, U->2b05, U->2b06, U->2b07
  	 6,30, 10, -1,86, 7,44,34,	// 2b08-2b0f: U->2b08, U->2b09, U->2b0a, U->2b0b, U->2b0c, U->2b0d, U->2b0e, U->2b0f
  	11,10,10, 0,11, -1,266,10,	// 2b10-2b17: U->2b10, U->2b11, U->2b12, F->2b13, U->2b14, U->2b15, U->2b16, U->2b17
-@@ -280,7 +280,7 @@ int chrif_isconnected(void) {
+@@ -283,7 +283,7 @@ int chrif_isconnected(void) {
   * Flag = 3: Character used @autotrade
   *------------------------------------------*/
  int chrif_save(struct map_session_data *sd, int flag) {
@@ -154,7 +154,7 @@ index ee73578..33874ce 100644
  	nullpo_retr(-1, sd);
  
  	pc_makesavestatus(sd);
-@@ -312,10 +312,10 @@ int chrif_save(struct map_session_data *sd, int flag) {
+@@ -315,10 +315,10 @@ int chrif_save(struct map_session_data *sd, int flag) {
  	mmo_charstatus_len = sizeof(sd->status) + 13;
  	WFIFOHEAD(char_fd, mmo_charstatus_len);
  	WFIFOW(char_fd,0) = 0x2b01;
@@ -169,7 +169,7 @@ index ee73578..33874ce 100644
  
  	// If the user is on a instance map, we have to fake his current position
  	if( map[sd->bl.m].instance_id ){
-@@ -326,13 +326,13 @@ int chrif_save(struct map_session_data *sd, int flag) {
+@@ -329,13 +329,13 @@ int chrif_save(struct map_session_data *sd, int flag) {
  		// Change his current position to his savepoint
  		memcpy( &status.last_point, &status.save_point, sizeof( struct point ) );
  		// Copy the copied status into the packet
@@ -186,7 +186,7 @@ index ee73578..33874ce 100644
  
  	if( sd->status.pet_id > 0 && sd->pd )
  		intif_save_petdata(sd->status.account_id,&sd->pd->pet);
-@@ -666,18 +666,18 @@ void chrif_authok(int fd) {
+@@ -669,18 +669,18 @@ void chrif_authok(int fd) {
  	TBL_PC* sd;
  
  	//Check if both servers agree on the struct's size
@@ -214,7 +214,7 @@ index ee73578..33874ce 100644
  	char_id = status->char_id;
  
  	//Check if we don't already have player data in our server
-@@ -1737,7 +1737,7 @@ int chrif_bsdata_received(int fd) {
+@@ -1762,7 +1762,7 @@ int chrif_bsdata_received(int fd) {
   *
   *------------------------------------------*/
  int chrif_parse(int fd) {
@@ -223,20 +223,20 @@ index ee73578..33874ce 100644
  
  	// only process data from the char-server
  	if ( fd != char_fd ) {
-@@ -1778,6 +1778,12 @@ int chrif_parse(int fd) {
+@@ -1803,6 +1803,12 @@ int chrif_parse(int fd) {
  			if (RFIFOREST(fd) < 4)
  				return 0;
  			packet_len = RFIFOW(fd,2);
 +
 +		}
 +		else if (packet_len == -2) { // dynamic-length packet, but instead of a WORD a LONG holds the length
-+			if (RFIFOREST(fd) < 6)
++			if (RFIFOREST(fd) < 4)
 +				return 0;
 +			packet_len = RFIFOL(fd, 2);
  		}
  
  		if ((int)RFIFOREST(fd) < packet_len)
-@@ -1975,8 +1981,8 @@ void do_final_chrif(void) {
+@@ -2001,8 +2007,8 @@ void do_final_chrif(void) {
   *
   *------------------------------------------*/
  void do_init_chrif(void) {
@@ -249,4 +249,44 @@ index ee73578..33874ce 100644
  	}
 -- 
 2.8.1.windows.1
+
+From faae83a5efc74a01d55d6a19fef3d0db2caddac0 Mon Sep 17 00:00:00 2001
+From: nitrous <vincents.995@gmail.com>
+Date: Mon, 22 Aug 2016 10:43:03 +0000
+Subject: [PATCH] interserver fifo size increased
+
+---
+ src/common/socket.h | 2 +-
+ src/map/chrif.c     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/common/socket.h b/src/common/socket.h
+index 3fa62ec..7ef1406 100644
+--- a/src/common/socket.h
++++ b/src/common/socket.h
+@@ -17,7 +17,7 @@
+ 
+ #include <time.h>
+ 
+-#define FIFOSIZE_SERVERLINK 256*1024
++#define FIFOSIZE_SERVERLINK 256*1024*2
+ 
+ // socket I/O macros
+ #define RFIFOHEAD(fd)
+diff --git a/src/map/chrif.c b/src/map/chrif.c
+index bc23af0..f24437c 100644
+--- a/src/map/chrif.c
++++ b/src/map/chrif.c
+@@ -1806,7 +1806,7 @@ int chrif_parse(int fd) {
+ 
+ 		}
+ 		else if (packet_len == -2) { // dynamic-length packet, but instead of a WORD a LONG holds the length
+-			if (RFIFOREST(fd) < 4)
++			if (RFIFOREST(fd) < 6)
+ 				return 0;
+ 			packet_len = RFIFOL(fd, 2);
+ 		}
+-- 
+2.8.1.windows.1
+
 
