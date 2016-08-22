@@ -230,7 +230,7 @@ index ee73578..33874ce 100644
 +
 +		}
 +		else if (packet_len == -2) { // dynamic-length packet, but instead of a WORD a LONG holds the length
-+			if (RFIFOREST(fd) < 4)
++			if (RFIFOREST(fd) < 6)
 +				return 0;
 +			packet_len = RFIFOL(fd, 2);
  		}
